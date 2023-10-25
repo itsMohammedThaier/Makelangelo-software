@@ -4,7 +4,7 @@ import com.jogamp.opengl.GL2;
 import com.marginallyclever.convenience.CommandLineOptions;
 import com.marginallyclever.makelangelo.Translator;
 import com.marginallyclever.makelangelo.makeart.TransformedImage;
-import com.marginallyclever.makelangelo.makeart.imagefilter.Filter_ContrastAdjust;
+import com.marginallyclever.makelangelo.makeart.imagefilter.FilterContrastAdjust;
 import com.marginallyclever.makelangelo.paper.Paper;
 import com.marginallyclever.makelangelo.preview.PreviewListener;
 import com.marginallyclever.makelangelo.rangeslider.RangeSlider;
@@ -185,9 +185,9 @@ public class SelectImageConverterPanel extends JPanel implements PreviewListener
 
 		boolean test;
 		if (mode == 0) {
-			test = width < height;  // fill paper
+			test = width < height;  // fit paper
 		} else {
-			test = width > height;  // fit paper
+			test = width > height;  // fill paper
 		}
 
 		float f;
@@ -234,8 +234,8 @@ public class SelectImageConverterPanel extends JPanel implements PreviewListener
 		logger.debug("starting {}", myConverter.getName());
 
 		scaleImage(fillNames.getSelectedIndex());
-		Filter_ContrastAdjust filter = new Filter_ContrastAdjust(rangeSliderMin, rangeSliderMax);
-		TransformedImage result = filter.filter(myImage);
+		FilterContrastAdjust filter = new FilterContrastAdjust(myImage,rangeSliderMin, rangeSliderMax);
+		TransformedImage result = filter.filter();
 
 		myConverter.start(myPaper,result);
 	}

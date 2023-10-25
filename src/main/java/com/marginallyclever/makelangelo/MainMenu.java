@@ -262,20 +262,28 @@ public class MainMenu extends JMenuBar {
     }
 
     private JMenu createGenerateMenu() {
-        JMenu menu = new JMenu(Translator.get("MenuGenerate"));
-        menu.setMnemonic('A');
-        for( TurtleGenerator ici : TurtleGeneratorFactory.available ) {
-            JMenuItem mi = new JMenuItem(ici.getName());
-            mi.addActionListener((e) -> runGeneratorDialog(ici));
-            menu.add(mi);
-        }
+        return createGeneratorMenuFromTree(TurtleGeneratorFactory.available);
+    }
 
+    private JMenu createGeneratorMenuFromTree(TurtleGeneratorFactory.TurtleGeneratorNode root) {
+        JMenu menu = new JMenu(root.getName());
+        for (TurtleGeneratorFactory.TurtleGeneratorNode child : root.getChildren()) {
+            if (child.getChildren().isEmpty()) {
+                JMenuItem menuItem = new JMenuItem(child.getName());
+                menu.add(menuItem);
+                menuItem.addActionListener((e) -> runGeneratorDialog(child.getGenerator()));
+            } else {
+                JMenu subMenu = createGeneratorMenuFromTree(child);
+                menu.add(subMenu);
+            }
+        }
         return menu;
     }
 
     private void runGeneratorDialog(TurtleGenerator turtleGenerator) {
         turtleGenerator.setPaper(app.getPaper());
         turtleGenerator.addListener(app::setTurtle);
+        turtleGenerator.setTurtle(app.getTurtle());
         turtleGenerator.generate();
 
         if(turtleGenerator.getPanelElements().isEmpty()) {
@@ -320,10 +328,12 @@ public class MainMenu extends JMenuBar {
             logger.debug("PiCaptureAction unavailable.");
         }
 
-        TurtleModifierAction a6 = new ResizeTurtleToPaperAction(app.getPaper(),false,Translator.get("ConvertImagePaperFit"));
-        TurtleModifierAction a7 = new ResizeTurtleToPaperAction(app.getPaper(),true,Translator.get("ConvertImagePaperFill"));
-        a6.setSource(app);		a6.addModifierListener(app::setTurtle);		menu.add(a6);
-        a7.setSource(app);		a7.addModifierListener(app::setTurtle);		menu.add(a7);
+        TurtleModifierAction paperFit = new ResizeTurtleToPaperAction(app.getPaper(),false,Translator.get("ConvertImagePaperFit"));
+        TurtleModifierAction paperFill = new ResizeTurtleToPaperAction(app.getPaper(),true,Translator.get("ConvertImagePaperFill"));
+        TurtleModifierAction paperCenter = new CenterTurtleToPaperAction(Translator.get("ConvertImagePaperCenter"));
+        paperFit.setSource(app);		paperFit.addModifierListener(app::setTurtle);		menu.add(paperFit);
+        paperFill.setSource(app);		paperFill.addModifierListener(app::setTurtle);		menu.add(paperFill);
+        paperCenter.setSource(app);		paperCenter.addModifierListener(app::setTurtle);	menu.add(paperCenter);
 
         JMenuItem translate = new JMenuItem(Translator.get("Translate"));
         menu.add(translate);
@@ -470,6 +480,8 @@ public class MainMenu extends JMenuBar {
 
     private void openPlotterSettings() {
         PlotterSettingsManagerPanel plotterSettingsPanel = new PlotterSettingsManagerPanel(app.getPlotterSettingsManager());
+        plotterSettingsPanel.addListener(app::onPlotterSettingsUpdate);
+
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),Translator.get("PlotterSettingsPanel.Title"));
         dialog.add(plotterSettingsPanel);
         dialog.setMinimumSize(new Dimension(350,300));
